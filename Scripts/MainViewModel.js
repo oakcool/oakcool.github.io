@@ -1,10 +1,10 @@
-define(["require", "exports", 'knockout', 'OakcoolViewModel', 'ProjectViewModel'], function (require, exports, ko, ovm, pvm) {
-    "use strict";
+var oak;
+(function (oak) {
     var MainViewModel = (function () {
         function MainViewModel() {
             this.areas = ko.observableArray();
-            this.areas.push(new pvm.ProjectViewModel(this));
-            var meVm = new ovm.OakcoolViewModel(this);
+            this.areas.push(new oak.ProjectViewModel(this));
+            var meVm = new oak.OakcoolViewModel(this);
             this.areas.push(meVm);
             this.current = ko.observable(meVm);
         }
@@ -13,6 +13,6 @@ define(["require", "exports", 'knockout', 'OakcoolViewModel', 'ProjectViewModel'
         };
         return MainViewModel;
     }());
-    exports.MainViewModel = MainViewModel;
-});
+    oak.MainViewModel = MainViewModel;
+})(oak || (oak = {}));
 //# sourceMappingURL=MainViewModel.js.map

@@ -1,25 +1,24 @@
-﻿import ko = require('knockout');
-import vm = require('AreaViewModel');
-import ovm = require('OakcoolViewModel');
-import pvm = require('ProjectViewModel');
+﻿
 
-export class MainViewModel {
-    areas: KnockoutObservableArray<vm.AreaViewModel>;
-    current: KnockoutObservable<vm.AreaViewModel>;
-    test: KnockoutObservable<string>;
+namespace oak {
+    export class MainViewModel {
+        areas: KnockoutObservableArray<AreaViewModel>;
+        current: KnockoutObservable<AreaViewModel>;
+        test: KnockoutObservable<string>;
 
-    constructor() {
-        
-        this.areas = ko.observableArray<vm.AreaViewModel>();
-        this.areas.push(new pvm.ProjectViewModel(this));
-        var meVm = new ovm.OakcoolViewModel(this)
-        this.areas.push(meVm);
-        this.current = ko.observable<vm.AreaViewModel>(meVm);
-    }
+        constructor() {
 
-    show(viewModel: vm.AreaViewModel) {
+            this.areas = ko.observableArray<AreaViewModel>();
+            this.areas.push(new ProjectViewModel(this));
+            var meVm = new OakcoolViewModel(this)
+            this.areas.push(meVm);
+            this.current = ko.observable<AreaViewModel>(meVm);
+        }
 
-        this.current(viewModel);
-        
+        show(viewModel: AreaViewModel) {
+
+            this.current(viewModel);
+
+        }
     }
 }

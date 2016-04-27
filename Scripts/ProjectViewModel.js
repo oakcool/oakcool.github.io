@@ -3,8 +3,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-define(["require", "exports", 'AreaViewModel'], function (require, exports, vm) {
-    "use strict";
+var oak;
+(function (oak) {
     var ProjectViewModel = (function (_super) {
         __extends(ProjectViewModel, _super);
         function ProjectViewModel(main) {
@@ -20,7 +20,7 @@ define(["require", "exports", 'AreaViewModel'], function (require, exports, vm) 
             this.main.show(this);
         };
         return ProjectViewModel;
-    }(vm.AreaViewModel));
-    exports.ProjectViewModel = ProjectViewModel;
-});
+    }(oak.AreaViewModel));
+    oak.ProjectViewModel = ProjectViewModel;
+})(oak || (oak = {}));
 //# sourceMappingURL=ProjectViewModel.js.map

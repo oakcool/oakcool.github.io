@@ -1,5 +1,6 @@
-define(["require", "exports", 'knockout', 'jquery'], function (require, exports, ko, $) {
-    "use strict";
+/// <reference path="typings/knockout/knockout.d.ts" />
+var oak;
+(function (oak) {
     var AreaViewModel = (function () {
         function AreaViewModel(vm) {
             this.main = vm;
@@ -21,6 +22,6 @@ define(["require", "exports", 'knockout', 'jquery'], function (require, exports,
         };
         return AreaViewModel;
     }());
-    exports.AreaViewModel = AreaViewModel;
-});
+    oak.AreaViewModel = AreaViewModel;
+})(oak || (oak = {}));
 //# sourceMappingURL=AreaViewModel.js.map
