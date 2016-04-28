@@ -1,6 +1,10 @@
-﻿a, a:hover, a:visited, a:active, a:link {
+﻿@fontcolor1: black;
+@fontcolor2: gray;
+@fontcolor3: darkgray;
+
+a, a:hover, a:visited, a:active, a:link {
     text-decoration: none;
-    color: black;
+    color: @fontcolor1;
 }
 
 
@@ -26,7 +30,7 @@
             padding-right: 7px;
             font-size: 40px;
             text-align: right;
-            color: gray;
+            color: @fontcolor2;
             position:relative;
             a {                
                 margin-bottom: -30px;
@@ -34,7 +38,7 @@
                 .accent {
                     font-size: 25px;
                     margin-bottom: -20px;
-                    color: darkgray;
+                    color: @fontcolor3;
                     top:-15px;
                     right:10px;
                     position:absolute;
@@ -59,7 +63,7 @@
         font-size: 60px !important;
         border-right: solid !important;
         border-right-width: 2px !important;
-        color: black !important;
+        color: @fontcolor1 !important;
     }
 
 
@@ -74,4 +78,12 @@
 
 .mainBody {
     height: 100%;
+}
+
+.content{
+    color:@fontcolor2;
+    strong{
+        color: @fontcolor1;
+        
+    }    
 }

@@ -13,6 +13,8 @@ var oak;
             this.imageHeight = ko.observable();
             this.imageWidth = ko.observable();
             this.imageMarginTop = ko.observable();
+            this.areaContent = ko.observable();
+            this.showContent = ko.observable(false);
         }
         AreaViewModel.prototype.calculateHeight = function () {
             var innerHeight = $("body").innerHeight();

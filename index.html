@@ -12,11 +12,11 @@
     <!-- Bootstrap -->
     <!--<script src="app.js"></script>-->
 </head>
-<body class="mainBody">
+<body class="mainBody text-lowercase">
     <div class="container-fluid mainContainer">
         <!-- Example row of columns -->
         <div class="row mainMenu">
-            <div class="col-md-2">                
+            <div class="col-md-2">
             </div>
             <div class="col-md-4">
                 <ul data-bind="foreach: areas" class="list-unstyled pull-down3_5ths">
@@ -40,10 +40,12 @@
                 </ul>-->
             </div>
             <div class="col-md-2">
-                <div ></div>
+                <div class="pull-down3_5ths text-justify content" data-bind="html: current().areaContent, visible: current().showContent">
+                    
+                </div>
             </div>
             <div class="col-md-2">
-                <img style="position:absolute;bottom:0;" data-bind="attr: {src: current().image, height: current().imageHeight() + 'px', width: current().imageWidth() + 'px'}, style: {margintop: current().imageMarginTop() + 'px'}"/>
+                <img style="position:absolute;bottom:0;" data-bind="attr: {src: current().image, height: current().imageHeight() + 'px', width: current().imageWidth() + 'px'}, style: {margintop: current().imageMarginTop() + 'px'}" />
             </div>
             <div class="col-md-2">
 
@@ -76,7 +78,7 @@
 
         $('.pull-down').each(function () {
             var $this = $(this);
-            var columnHeight = $this.height();        
+            var columnHeight = $this.height();
             var bodyHeight = $("body").innerHeight();
             var imageHeight = $this.height();
             var totalHeight = bodyHeight - (bodyHeight * .7);
@@ -88,4 +90,5 @@
     </script>
 
 </body>
+
 </html>

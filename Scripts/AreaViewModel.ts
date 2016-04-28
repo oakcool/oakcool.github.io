@@ -12,6 +12,9 @@ namespace oak {
         imageHeight: KnockoutObservable<number>;
         imageWidth: KnockoutObservable<number>;
         imageMarginTop: KnockoutObservable<number>;
+        areaContent: KnockoutObservable<string>;
+        showContent: KnockoutObservable<boolean>;
+
         main: any;
 
         constructor(vm: any) {
@@ -25,8 +28,8 @@ namespace oak {
             this.imageHeight = ko.observable<number>();
             this.imageWidth = ko.observable<number>();
             this.imageMarginTop = ko.observable<number>();
-
-
+            this.areaContent = ko.observable<string>();
+            this.showContent = ko.observable<boolean>(false);
         }
 
         calculateHeight() {
