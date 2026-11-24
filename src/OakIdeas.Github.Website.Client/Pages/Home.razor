@@ -1,0 +1,92 @@
+@page "/"
+@using OakIdeas.Github.Website.Client.Components
+@using OakIdeas.Github.Website.Client.Menu
+@inject MenuConfigurationLoader MenuLoader
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageTitle>Oakcool's Repo</PageTitle>
+
+<h1 class="sr-only">OakIdeas</h1>
+<div class="site-grid min-h-screen w-full">
+    <div class="grid-spacer" aria-hidden="true"></div>
+    <SiteMenu Items="@_items" CurrentItemId="@_currentItem?.Id" OnSelect="@SelectItemAsync" />
+    <SiteContent Content="@_content" Visible="@_showContent" />
+    <SiteImage Image="@_currentItem?.Image" />
+    <div class="grid-spacer" aria-hidden="true"></div>
+</div>
+
+@if (_error is not null)
+{
+    <p class="load-error" role="alert">@_error</p>
+}
+
+@code {
+    private IReadOnlyList<MenuItemConfiguration> _items = [];
+    private MenuItemConfiguration? _currentItem;
+    private string _content = string.Empty;
+    private string? _error;
+    private bool _showContent;
+    private long _selectionVersion;
+    private CancellationTokenSource? _selectionCancellation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _items = await MenuLoader.LoadMenuAsync();
+            _currentItem = _items.Single(item => item.Id == MenuLoader.DefaultItemId);
+        }
+        catch (Exception)
+        {
+            _error = "The site menu could not be loaded. Please try again later.";
+        }
+    }
+
+    private async Task SelectItemAsync(MenuItemConfiguration item)
+    {
+        _selectionCancellation?.Cancel();
+        _selectionCancellation?.Dispose();
+        _selectionCancellation = new CancellationTokenSource();
+        var selectionVersion = ++_selectionVersion;
+
+        _currentItem = item;
+        _content = string.Empty;
+        _showContent = false;
+        _error = null;
+
+        if (item.Action.Type == "url")
+        {
+            Navigation.NavigateTo(item.Action.Url!, forceLoad: true);
+            return;
+        }
+
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var content = await MenuLoader.LoadContentAsync(item, _selectionCancellation.Token);
+            if (selectionVersion == _selectionVersion)
+            {
+                _content = content;
+                _showContent = true;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+            if (selectionVersion == _selectionVersion)
+            {
+                _error = "The selected content could not be loaded. Please try again.";
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _selectionCancellation?.Cancel();
+        _selectionCancellation?.Dispose();
+    }
+}

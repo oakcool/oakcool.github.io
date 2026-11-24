@@ -1,0 +1,11 @@
+<section class="site-content" aria-label="selected section content" aria-live="polite" hidden="@(!Visible)">
+    @((MarkupString)Content)
+</section>
+
+@code {
+    [Parameter]
+    public string Content { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Visible { get; set; }
+}

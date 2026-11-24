@@ -1,0 +1,263 @@
+@import "tailwindcss";
+@source "../src/OakIdeas.Github.Website.Client/**/*.razor";
+@source "../src/OakIdeas.Github.Website.Client/**/*.cs";
+
+:root {
+  color-scheme: light;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #000;
+  background: #fff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  text-transform: lowercase;
+}
+
+.site-grid {
+  display: grid;
+  grid-template-columns: 2fr 4fr 2fr 2fr 2fr;
+  min-height: 100vh;
+}
+
+.site-menu {
+  min-width: 0;
+  padding: 0 15px;
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px;
+  margin: 60vh 0 0;
+  padding: 0;
+}
+
+.menu-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-right: 2px solid transparent;
+  padding: 0 7px 0 0;
+  background: transparent;
+  color: #808080;
+  font: inherit;
+  text-align: right;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  border-right-color: #000;
+  color: #000;
+}
+
+.menu-item:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+}
+
+.menu-item.identity {
+  min-height: 66px;
+  border-right-color: #000;
+  color: #000;
+}
+
+.menu-item-label {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.menu-title {
+  max-width: 100%;
+  font-size: 40px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.menu-item.identity .menu-title {
+  font-size: 60px;
+  line-height: 1.1;
+}
+
+.menu-subtitle {
+  position: absolute;
+  top: -15px;
+  right: 3px;
+  color: darkgray;
+  font-size: 25px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.menu-item:hover .menu-subtitle,
+.menu-item:focus-visible .menu-subtitle,
+.menu-item.identity .menu-subtitle {
+  color: gray;
+}
+
+.site-content {
+  min-width: 0;
+  margin-top: 60vh;
+  padding: 0 12px;
+  color: gray;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.site-content[hidden] {
+  display: none;
+}
+
+.site-content h2,
+.site-content p {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.site-content h2 {
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.site-content h2,
+.site-content strong {
+  color: #000;
+}
+
+.site-content .initialism {
+  font-size: 90%;
+  text-transform: uppercase;
+}
+
+.site-content a {
+  color: #000;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.site-image {
+  display: flex;
+  min-width: 0;
+  height: 100vh;
+  align-items: flex-end;
+  justify-content: flex-start;
+  margin: 0;
+  padding-left: 15px;
+}
+
+.site-image img {
+  display: block;
+  flex-shrink: 0;
+  width: auto;
+  max-width: none;
+  max-height: calc(var(--image-ratio) * 100vh);
+  object-fit: contain;
+  object-position: bottom;
+}
+
+.load-error {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1;
+  max-width: min(32rem, calc(100vw - 2rem));
+  margin: 0;
+  border: 1px solid #900;
+  padding: 0.75rem;
+  background: #fff;
+  color: #900;
+}
+
+.loading {
+  margin: 1rem;
+  color: gray;
+}
+
+@media (max-width: 760px) {
+  .site-grid {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+
+  .grid-spacer {
+    display: none;
+  }
+
+  .menu-list {
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .site-menu {
+    padding: 0;
+  }
+
+  .menu-item {
+    min-height: 3rem;
+  }
+
+  .menu-title {
+    font-size: clamp(2rem, 9vw, 2.5rem);
+  }
+
+  .menu-item.identity {
+    min-height: 4rem;
+  }
+
+  .menu-item.identity .menu-title {
+    font-size: clamp(2rem, 8vw, 2.5rem);
+  }
+
+  .site-content {
+    margin-top: 0;
+    padding: 0;
+  }
+
+  .site-image {
+    height: auto;
+    min-height: 0;
+    justify-content: flex-end;
+    padding-left: 0;
+  }
+
+  .site-image img {
+    max-width: 100%;
+    max-height: calc(var(--image-ratio) * 100vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

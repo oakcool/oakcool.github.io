@@ -1,0 +1,18 @@
+{
+  "name": "oakideas-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build and browser validation tools for the OakIdeas static website.",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i styles/site.css -o src/OakIdeas.Github.Website.Client/wwwroot/css/app.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i styles/site.css -o src/OakIdeas.Github.Website.Client/wwwroot/css/app.css --watch",
+    "test:e2e": "playwright test",
+    "check:artifact": "node scripts/verify-static-artifact.mjs"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/cli": "4.3.5",
+    "tailwindcss": "4.3.5"
+  }
+}
