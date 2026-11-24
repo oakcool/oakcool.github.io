@@ -1,3 +1,4 @@
+using System.Text.Json;
 using OakIdeas.Github.Website.Client.Menu;
 
 namespace OakIdeas.Github.Website.Tests;
@@ -45,6 +46,7 @@ public sealed class MenuConfigurationValidatorTests
     [InlineData("../content/identity.html")]
     [InlineData("content/%2e%2e/identity.html")]
     [InlineData("content/%252e%252e/identity.html")]
+    [InlineData("content/identity%2ehtml")]
     [InlineData("/content/identity.html")]
     [InlineData("content\\identity.html")]
     [InlineData("javascript:alert(1)")]
@@ -54,6 +56,37 @@ public sealed class MenuConfigurationValidatorTests
         configuration.Items[1].Action.ContentPath = path;
 
         Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(configuration));
+    }
+
+    [Theory]
+    [InlineData(" \t\n")]
+    public void Validate_RejectsWhitespaceOnlyRequiredText(string whitespace)
+    {
+        var idConfiguration = CreateConfiguration();
+        idConfiguration.Items[1].Id = whitespace;
+        Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(idConfiguration));
+
+        var titleConfiguration = CreateConfiguration();
+        titleConfiguration.Items[1].Title = whitespace;
+        Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(titleConfiguration));
+
+        var subtitleConfiguration = CreateConfiguration();
+        subtitleConfiguration.Items[1].Subtitle = whitespace;
+        Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(subtitleConfiguration));
+
+        var altConfiguration = CreateConfiguration();
+        altConfiguration.Items[1].Image.Alt = whitespace;
+        Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(altConfiguration));
+    }
+
+    [Fact]
+    public void Validate_AcceptsCaseInsensitiveFileExtensions()
+    {
+        var configuration = CreateConfiguration();
+        configuration.Items[1].Action.ContentPath = "content/identity.HTML";
+        configuration.Items[1].Image.Src = "Content/site.PNG";
+
+        MenuConfigurationValidator.Validate(configuration);
     }
 
     [Theory]
@@ -89,31 +122,8 @@ public sealed class MenuConfigurationValidatorTests
         Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(configuration));
     }
 
-    private static MenuConfiguration CreateConfiguration() => new()
-    {
-        SchemaVersion = 1,
-        DefaultItemId = "identity",
-        Items = [CreateItem("projects"), CreateItem("identity")]
-    };
-
-    private static MenuItemConfiguration CreateItem(string id) => new()
-    {
-        Id = id,
-        Title = id,
-        Subtitle = "oakideas",
-        Enabled = true,
-        Appearance = id == "identity" ? "identity" : "standard",
-        Action = new MenuActionConfiguration
-        {
-            Type = "content",
-            ContentPath = $"content/{id}.html"
-        },
-        Image = new MenuImageConfiguration
-        {
-            Src = "Content/site.png",
-            Alt = "site",
-            ViewportHeightRatio = 0.7,
-            Alignment = "bottom"
-        }
-    };
+    private static MenuConfiguration CreateConfiguration() =>
+        JsonSerializer.Deserialize<MenuConfiguration>(
+            File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "menu.json")),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 }

@@ -57,18 +57,16 @@ public static partial class MenuConfigurationValidator
 
     public static bool IsSafeRelativePath(string? path)
     {
-        if (string.IsNullOrWhiteSpace(path) || path.StartsWith('/') || path.Contains('\\') || path.Contains(':'))
+        if (string.IsNullOrWhiteSpace(path) ||
+            path.StartsWith('/') ||
+            path.Contains('\\') ||
+            path.Contains(':') ||
+            path.Contains('%'))
         {
             return false;
         }
 
-        var decoded = Uri.UnescapeDataString(path);
-        if (decoded.StartsWith('/') || decoded.Contains('\\') || decoded.Contains(':'))
-        {
-            return false;
-        }
-
-        return decoded.Split('/').All(segment =>
+        return path.Split('/').All(segment =>
             segment.Length > 0 &&
             segment is not "." and not ".." &&
             SafePathSegmentRegex().IsMatch(segment));

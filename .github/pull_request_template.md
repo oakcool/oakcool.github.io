@@ -1,6 +1,6 @@
 ## Issue
 
-Closes oakcool/oakcool.github.io#2
+Closes #<issue-number>
 
 ## Migration inventory
 

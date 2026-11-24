@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
+const productionTarget = process.env.E2E_TARGET === "production";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -10,9 +12,11 @@ export default defineConfig({
     trace: "retain-on-failure"
   },
   webServer: {
-    command: "dotnet run --project src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj --launch-profile http --no-restore",
+    command: productionTarget
+      ? "python3 -m http.server 5014 --bind 127.0.0.1 --directory artifacts/site/wwwroot"
+      : "dotnet run --project src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj --launch-profile http --no-restore",
     url: "http://127.0.0.1:5014",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !productionTarget && !process.env.CI,
     timeout: 120_000
   }
 });

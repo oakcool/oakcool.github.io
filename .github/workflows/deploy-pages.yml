@@ -31,6 +31,7 @@ jobs:
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
           aspire --version
       - run: npm ci
+      - run: npm run test:artifact
       - run: npm run build:css
       - run: dotnet restore OakIdeas.Github.Website.slnx --locked-mode
       - run: dotnet test OakIdeas.Github.Website.slnx --configuration Release --no-restore
@@ -38,6 +39,10 @@ jobs:
       - run: npm run test:e2e
       - run: dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj --configuration Release --no-restore --output artifacts/site
       - run: npm run check:artifact -- artifacts/site/wwwroot
+      - name: Test the published static site in Playwright
+        run: npm run test:e2e
+        env:
+          E2E_TARGET: production
       - name: Smoke-test the published static files over HTTP
         run: |
           set -euo pipefail

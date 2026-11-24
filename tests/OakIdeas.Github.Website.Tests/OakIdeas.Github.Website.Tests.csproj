@@ -13,4 +13,7 @@
     <Using Include="Xunit" />
     <ProjectReference Include="../../src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../src/OakIdeas.Github.Website.Client/wwwroot/menu.json" Link="menu.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

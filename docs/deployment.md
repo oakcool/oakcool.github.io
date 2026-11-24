@@ -2,7 +2,7 @@
 
 ## Automated path
 
-`.github/workflows/deploy-pages.yml` runs for every push to `master`, including the first merge, and supports owner-initiated `workflow_dispatch` recovery from `master`. Pull requests never publish or deploy. The workflow restores in locked mode, runs xUnit/BUnit and Playwright, builds Tailwind, publishes the standalone client, validates the static artifact, smoke-tests it over HTTP, and uploads only `artifacts/site/wwwroot`. Deployment runs with Pages write and OIDC permissions in the `github-pages` environment and is serialized with non-cancelling concurrency.
+`.github/workflows/deploy-pages.yml` runs for every push to `master`, including the first merge, and supports owner-initiated `workflow_dispatch` recovery from `master`. Pull requests never publish or deploy. The workflow restores in locked mode, runs xUnit/BUnit, Node artifact-validation regressions, and Playwright against both the development server and the Release artifact served over static HTTP. It builds Tailwind, publishes the standalone client, validates and smoke-tests the exact `artifacts/site/wwwroot` directory, then uploads only that directory. Deployment runs with Pages write and OIDC permissions in the `github-pages` environment and is serialized with non-cancelling concurrency.
 
 `wwwroot/CNAME` retains `www.oakideas.com`, `.nojekyll` preserves the Blazor `_framework` directory, and the custom-domain root uses `<base href="/">`. No DNS changes are required or authorized by this change.
 

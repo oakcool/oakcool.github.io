@@ -30,9 +30,10 @@ npm run build:css
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj \
   --configuration Release --output artifacts/site
 npm run check:artifact -- artifacts/site/wwwroot
+E2E_TARGET=production npm run test:e2e
 ```
 
-The deployable site is `artifacts/site/wwwroot` only. Do not publish the outer directory, AppHost, tests, repository instructions, or source files.
+The production browser check serves and tests the published `artifacts/site/wwwroot` artifact over static HTTP; regular `npm run test:e2e` continues to use the local Blazor development server. The deployable site is `artifacts/site/wwwroot` only. Do not publish the outer directory, AppHost, tests, repository instructions, or source files.
 
 ## Project map
 

@@ -21,13 +21,15 @@ npm ci
 npm run build:css
 dotnet restore OakIdeas.Github.Website.slnx --locked-mode
 dotnet test OakIdeas.Github.Website.slnx --no-restore
+npm run test:artifact
 npx playwright install chromium
 npm run test:e2e
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj -c Release --no-restore -o artifacts/site
 npm run check:artifact -- artifacts/site/wwwroot
+E2E_TARGET=production npm run test:e2e
 ```
 
-CI additionally serves `artifacts/site/wwwroot` over HTTP and requests the root page, CNAME, menu, fingerprinted Blazor runtime, and a WebAssembly file.
+Regular Playwright tests use the development server. The production-target command serves the exact published `artifacts/site/wwwroot` over static HTTP before browser validation; CI also requests the CNAME, menu, fingerprinted Blazor runtime, and a WebAssembly file.
 
 ## Safe boundaries
 
