@@ -31,6 +31,7 @@ Build and verify the production site:
 npm run build:css
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj \
   --configuration Release --output artifacts/site
+printf '%s\n' "$(git rev-parse HEAD)" > artifacts/site/wwwroot/deployment-revision.txt
 npm run check:artifact -- artifacts/site/wwwroot
 E2E_TARGET=production npm run test:e2e
 ```

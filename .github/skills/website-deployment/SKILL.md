@@ -19,6 +19,7 @@ Use for Pages workflow changes, custom-domain/static artifact questions, cutover
 ```sh
 npm run build:css
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj -c Release --no-restore -o artifacts/site
+printf '%s\n' "$(git rev-parse HEAD)" > artifacts/site/wwwroot/deployment-revision.txt
 npm run check:artifact -- artifacts/site/wwwroot
 npm run test:deployment
 ```

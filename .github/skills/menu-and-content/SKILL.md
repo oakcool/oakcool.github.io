@@ -20,6 +20,7 @@ Use for schema-v1 menu configuration, copy/formatting, local assets, or content-
 dotnet test tests/OakIdeas.Github.Website.Tests/OakIdeas.Github.Website.Tests.csproj
 npm run build:css
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj -c Release -o artifacts/site
+printf '%s\n' "$(git rev-parse HEAD)" > artifacts/site/wwwroot/deployment-revision.txt
 npm run check:artifact -- artifacts/site/wwwroot
 ```
 

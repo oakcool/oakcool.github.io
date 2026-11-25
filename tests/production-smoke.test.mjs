@@ -10,8 +10,26 @@ const menu = {
   schemaVersion: 1,
   defaultItemId: "identity",
   items: [
-    { id: "identity", enabled: true, image: { src: "Content/identity.png" }, action: { type: "content", contentPath: "content/identity.html" } },
-    { id: "projects", enabled: true, image: { src: "Content/projects.png" }, action: { type: "content", contentPath: "content/projects.html" } }
+    {
+      id: "identity",
+      title: "mateus carvalho",
+      subtitle: "oakcool",
+      order: 2,
+      enabled: true,
+      appearance: "identity",
+      image: { src: "Content/identity.png", alt: "Identity portrait", viewportHeightRatio: 0.7, alignment: "bottom" },
+      action: { type: "content", contentPath: "content/identity.html" }
+    },
+    {
+      id: "projects",
+      title: "projects",
+      subtitle: "oakideas",
+      order: 1,
+      enabled: true,
+      appearance: "standard",
+      image: { src: "Content/projects.png", alt: "Projects illustration", viewportHeightRatio: 0.4, alignment: "bottom" },
+      action: { type: "content", contentPath: "content/projects.html" }
+    }
   ]
 };
 const rootDocument = '<!doctype html><html><head><base href="/">' +
@@ -32,7 +50,7 @@ const dotnetLoader = `/*json-start*/${JSON.stringify(dotnetMetadata)}/*json-end*
 const fixtures = new Map([
   ["/", [rootDocument, "text/html; charset=utf-8"]],
   ["/menu.json", [JSON.stringify(menu), "application/json; charset=utf-8"]],
-  ["/_framework/blazor.webassembly.js", ["// Blazor bootstrap runtime", "text/javascript"]],
+  ["/_framework/blazor.webassembly.js", ['const fallbackMarkup = "<body>not a document</body>";', "text/javascript"]],
   ["/_framework/dotnet.test.js", [dotnetLoader, "application/javascript; charset=utf-8"]],
   ["/_framework/dotnet.native.release.wasm", [wasmSignature, "application/wasm"]],
   ["/_framework/OakIdeas.Github.Website.Client.release.wasm", [wasmSignature, "application/wasm"]],
@@ -118,6 +136,19 @@ test("retries an old deployment revision until the expected revision propagates"
   assert.equal(calls.get("/deployment-revision.txt"), 2);
 });
 
+test("retries transient HTTP failures", async () => {
+  const { fetchImpl, calls } = createFetch({
+    overrides: {
+      "/menu.json": (url, count) => count === 1
+        ? makeResponse(url, "temporarily unavailable", "text/plain", { status: 503, statusText: "Service Unavailable" })
+        : makeResponse(url, JSON.stringify(menu), "application/json")
+    }
+  });
+
+  await run(fetchImpl, { attempts: 2 });
+  assert.equal(calls.get("/menu.json"), 2);
+});
+
 test("retries malformed JSON and reports exhausted validation attempts", async () => {
   const { fetchImpl: recoveredFetch, calls: recoveredCalls } = createFetch({
     overrides: {
@@ -139,6 +170,18 @@ test("retries malformed JSON and reports exhausted validation attempts", async (
   await assert.rejects(run(fetchImpl, { attempts: 2 }),
     /menu configuration \(\/menu\.json\) failed after 2 attempts: menu\.json is invalid JSON/);
   assert.equal(calls.get("/menu.json"), 2);
+});
+
+test("caps caller-supplied retry counts", async () => {
+  const { fetchImpl, calls } = createFetch({
+    overrides: {
+      "/menu.json": url => makeResponse(url, "{broken", "application/json")
+    }
+  });
+
+  await assert.rejects(run(fetchImpl, { attempts: 20 }),
+    /menu configuration \(\/menu\.json\) failed after 4 attempts: menu\.json is invalid JSON/);
+  assert.equal(calls.get("/menu.json"), 4);
 });
 
 test("retries response-body failures before successful content validation", async () => {
@@ -166,12 +209,12 @@ test("retries response-body failures before successful content validation", asyn
 test("rejects a 200 JavaScript URL that returns an HTML fallback document", async () => {
   const { fetchImpl, calls } = createFetch({
     overrides: {
-      "/_framework/blazor.webassembly.js": url => makeResponse(url, rootDocument, "text/html")
+      "/_framework/blazor.webassembly.js": url => makeResponse(url, rootDocument, "application/javascript")
     }
   });
 
   await assert.rejects(run(fetchImpl, { attempts: 2 }),
-    /Blazor WebAssembly bootstrap \(\/_framework\/blazor\.webassembly\.js\) failed after 2 attempts: Blazor WebAssembly bootstrap has incompatible content type text\/html/);
+    /Blazor WebAssembly bootstrap \(\/_framework\/blazor\.webassembly\.js\) failed after 2 attempts: Blazor WebAssembly bootstrap returned an HTML fallback document/);
   assert.equal(calls.get("/_framework/blazor.webassembly.js"), 2);
 });
 
@@ -249,22 +292,24 @@ test("reports an incorrect expected deployment revision after bounded retries", 
 });
 
 test("does not retry unsafe paths", async () => {
-  const unsafeMenu = {
-    ...menu,
-    items: menu.items.map(item => item.id === "identity"
-      ? { ...item, image: { src: "../escape.png" } }
-      : item)
-  };
-  const { fetchImpl, calls } = createFetch({
-    overrides: {
-      "/menu.json": url => makeResponse(url, JSON.stringify(unsafeMenu), "application/json")
-    }
-  });
+  for (const unsafePath of ["../escape.png", "//unexpected.example/image.png"]) {
+    const unsafeMenu = {
+      ...menu,
+      items: menu.items.map(item => item.id === "identity"
+        ? { ...item, image: { ...item.image, src: unsafePath } }
+        : item)
+    };
+    const { fetchImpl, calls } = createFetch({
+      overrides: {
+        "/menu.json": url => makeResponse(url, JSON.stringify(unsafeMenu), "application/json")
+      }
+    });
 
-  await assert.rejects(run(fetchImpl, { attempts: 3 }),
-    /image for menu item identity must be a safe same-origin static path: \.\.\/escape\.png/);
-  assert.equal(calls.get("/menu.json"), 1);
-  assert.equal(calls.has("/../escape.png"), false);
+    await assert.rejects(run(fetchImpl, { attempts: 3 }),
+      /image for menu item identity \(.*\) failed after 0 attempts: image for menu item identity must be a safe same-origin static path/);
+    assert.equal(calls.get("/menu.json"), 1);
+    assert.equal(calls.size, 5);
+  }
 });
 
 test("rejects unexpected redirects without retrying", async () => {

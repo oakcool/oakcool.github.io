@@ -10,14 +10,17 @@ const jsonTypes = ["application/json", "text/json"];
 const wasmTypes = ["application/wasm", "application/octet-stream"];
 
 function staticPath(value, label) {
-  if (typeof value !== "string" || value.length === 0 || value.includes("%") ||
+  if (value === "/") {
+    return "/";
+  }
+  if (typeof value !== "string" || value.length === 0 || value.startsWith("//") || value.includes("%") ||
     value.includes("\\") || value.includes(":") || value.includes("?") || value.includes("#")) {
     throw new Error(`${label} must be a safe same-origin static path.`);
   }
 
   const normalized = value.replace(/^\.\//, "").replace(/^\/+/, "");
   if (normalized.length === 0) {
-    return "/";
+    throw new Error(`${label} must be a safe same-origin static path.`);
   }
 
   const segments = normalized.split("/");
@@ -26,6 +29,14 @@ function staticPath(value, label) {
   }
 
   return `/${normalized}`;
+}
+
+function safeResourcePath(value, label) {
+  try {
+    return staticPath(value, label);
+  } catch (error) {
+    throw new Error(`${label} (${String(value)}) failed after 0 attempts: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 class NonRetryableError extends Error {}
@@ -56,7 +67,7 @@ function requireNonEmptyText(text, label) {
 }
 
 function isHtmlDocument(text) {
-  return /<!doctype\s+html\b|<html\b|<head\b|<body\b/i.test(text);
+  return /^(?:<!doctype\s+html\b|<html\b|<head\b|<body\b)/i.test(text.trimStart());
 }
 
 function requireNotHtmlFallback(text, label) {
@@ -120,17 +131,42 @@ function validateMenu(menu) {
     throw new Error("menu.json must contain schemaVersion 1, a defaultItemId, and a non-empty items array");
   }
 
+  const ids = new Set();
   const defaultItem = menu.items.find(item => item?.id === menu.defaultItemId && item.enabled !== false);
   if (!defaultItem) {
     throw new Error("menu.json defaultItemId must identify an enabled menu item");
   }
 
   for (const item of menu.items) {
-    if (!item || typeof item !== "object" || typeof item.id !== "string" ||
-      typeof item.image?.src !== "string" ||
-      (item.action?.type !== "content" && item.action?.type !== "url") ||
-      (item.action.type === "content" && typeof item.action.contentPath !== "string")) {
-      throw new Error("menu.json contains an item missing its id, image, or supported action");
+    if (!item || typeof item !== "object" || Array.isArray(item) ||
+      typeof item.id !== "string" || item.id.trim().length === 0 || ids.has(item.id) ||
+      (item.enabled !== undefined && typeof item.enabled !== "boolean") ||
+      !["standard", "identity"].includes(item.appearance) ||
+      typeof item.title !== "string" || item.title.trim().length === 0 ||
+      typeof item.subtitle !== "string" || item.subtitle.trim().length === 0 ||
+      !item.image || typeof item.image !== "object" || Array.isArray(item.image) ||
+      typeof item.image.src !== "string" || typeof item.image.alt !== "string" ||
+      item.image.alt.trim().length === 0 ||
+      !Number.isFinite(item.image.viewportHeightRatio) || item.image.viewportHeightRatio <= 0 ||
+      item.image.viewportHeightRatio > 1 || item.image.alignment !== "bottom" ||
+      !item.action || typeof item.action !== "object" || Array.isArray(item.action) ||
+      (item.action.type !== "content" && item.action.type !== "url") ||
+      (item.action.type === "content" && typeof item.action.contentPath !== "string") ||
+      (item.action.type === "url" && typeof item.action.url !== "string")) {
+      throw new Error("menu.json contains an item with missing or invalid required properties");
+    }
+    ids.add(item.id);
+
+    if (item.action.type === "url") {
+      let url;
+      try {
+        url = new URL(item.action.url);
+      } catch {
+        throw new Error(`menu.json URL for item ${item.id} is invalid`);
+      }
+      if (url.protocol !== "https:" || url.username || url.password) {
+        throw new Error(`menu.json URL for item ${item.id} must use HTTPS and cannot contain credentials`);
+      }
     }
   }
   return menu;
@@ -170,12 +206,7 @@ function parseRootDocument(bytes, headers) {
 }
 
 async function request(path, label, fetchImpl, attempts, retryDelayMs, timeoutMs, validate) {
-  let safePath;
-  try {
-    safePath = staticPath(path, label);
-  } catch (error) {
-    throw new Error(`${label} (${String(path)}) failed after 0 attempts: ${error instanceof Error ? error.message : String(error)}`);
-  }
+  const safePath = safeResourcePath(path, label);
   const url = new URL(safePath, productionOrigin);
   let lastError;
   let attemptsMade = 0;
@@ -244,6 +275,13 @@ export async function verifyProductionSite({
         return revision;
       })
   ]);
+
+  for (const item of menu.items) {
+    safeResourcePath(item.image.src, `image for menu item ${item.id}`);
+    if (item.action.type === "content") {
+      safeResourcePath(item.action.contentPath, `content for menu item ${item.id}`);
+    }
+  }
 
   const assetChecks = [];
   for (const item of menu.items) {
