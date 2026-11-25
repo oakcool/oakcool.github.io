@@ -107,6 +107,19 @@ public sealed class MenuConfigurationValidatorTests
     }
 
     [Fact]
+    public void Validate_RejectsExternalUrlsWithCredentials()
+    {
+        var configuration = CreateConfiguration();
+        configuration.Items[1].Action = new MenuActionConfiguration
+        {
+            Type = "url",
+            Url = new UriBuilder("https://example.com") { UserName = "demo", Password = "sample" }.Uri.AbsoluteUri
+        };
+
+        Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(configuration));
+    }
+
+    [Fact]
     public void Validate_RejectsAnUnsupportedAppearance()
     {
         var configuration = CreateConfiguration();

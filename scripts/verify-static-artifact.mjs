@@ -75,6 +75,8 @@ for (const item of menu.items) {
     assert.ok(item.action.contentPath == null, `URL menu item ${item.id} cannot include a content path.`);
     assert.equal(typeof item.action.url, "string", `URL menu item ${item.id} needs a URL.`);
     const url = new URL(item.action.url);
+    assert.equal(url.username, "", "Menu URLs must not include credentials.");
+    assert.equal(url.password, "", "Menu URLs must not include credentials.");
     assert.equal(url.protocol, "https:", `Menu item ${item.id} must use HTTPS links.`);
     assert.ok(url.host, `Menu item ${item.id} must use an absolute URL.`);
   } else {
@@ -105,15 +107,38 @@ async function assertSafeFile(relativePath, extension) {
 async function ensureNoSourceFiles(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const absolutePath = path.join(directory, entry.name);
+    const relativePath = path.relative(artifactRoot, absolutePath).replaceAll(path.sep, "/");
+    assert.ok(!isObsoleteResource(relativePath),
+      `Obsolete or development file must not be published: ${relativePath}`);
     if (entry.isDirectory()) {
-      assert.ok(![".github", "node_modules", "obj", "bin"].includes(entry.name),
+      assert.ok(![".github", ".git", ".aspire", ".vs", "node_modules", "obj", "bin", "docs", "src", "tests", "styles"]
+        .includes(entry.name.toLowerCase()),
         `Development directory must not be published: ${path.relative(artifactRoot, absolutePath)}`);
       await ensureNoSourceFiles(absolutePath);
     } else {
-      assert.ok(!/\.(?:cs|razor|ts|pdb|map)$/i.test(entry.name),
+      assert.ok(!/\.(?:cs|razor|ts|pdb|map|less|csproj|sln|slnx)$/i.test(entry.name) &&
+        !["agents.md", "readme.md", "packages.config"].includes(entry.name.toLowerCase()),
         `Development source must not be published: ${path.relative(artifactRoot, absolutePath)}`);
     }
   }
+}
+
+function isObsoleteResource(relativePath) {
+  const normalizedPath = relativePath.toLowerCase();
+  const fileName = path.posix.basename(normalizedPath);
+  return normalizedPath === "scripts" ||
+    normalizedPath.startsWith("scripts/") ||
+    normalizedPath === "content/bootstrap" ||
+    normalizedPath.startsWith("content/bootstrap/") ||
+    ["content/bootstrap.css", "content/bootstrap.min.css", "content/site.css", "content/site.less",
+      "content/thumbs.db", "app.js", "app.js.map"].includes(normalizedPath) ||
+    /^oakideas\.github\.website\.(?:csproj|sln)$/.test(fileName) ||
+    /^web(?:\..+)?\.config$/.test(fileName) ||
+    /^compilerconfig(?:\..*)?$/.test(fileName) ||
+    /^webessentials(?:\..*)?$/.test(fileName) ||
+    /^glyphicons-/.test(fileName) ||
+    fileName === "thumbs.db" ||
+    fileName.endsWith(".less");
 }
 
 await ensureNoSourceFiles(artifactRoot);

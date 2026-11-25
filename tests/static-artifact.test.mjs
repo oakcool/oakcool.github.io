@@ -10,7 +10,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const menuPath = path.join(repositoryRoot, "src/OakIdeas.Github.Website.Client/wwwroot/menu.json");
 const verifierPath = path.join(repositoryRoot, "scripts/verify-static-artifact.mjs");
 
-async function runVerifier(editMenu = () => {}) {
+async function runVerifier(editMenu = () => {}, extraFile = null) {
   const artifactRoot = await mkdtemp(path.join(os.tmpdir(), "oakideas-artifact-test-"));
   try {
     const menu = JSON.parse(await readFile(menuPath, "utf8"));
@@ -44,6 +44,12 @@ async function runVerifier(editMenu = () => {}) {
       }
     }
 
+    if (extraFile) {
+      const extraPath = path.join(artifactRoot, extraFile);
+      await mkdir(path.dirname(extraPath), { recursive: true });
+      await writeFile(extraPath, "");
+    }
+
     return spawnSync(process.execPath, [verifierPath, artifactRoot], { encoding: "utf8" });
   } finally {
     await rm(artifactRoot, { recursive: true, force: true });
@@ -67,6 +73,32 @@ test("rejects percent-encoded paths", async () => {
   });
 
   assert.notEqual(result.status, 0);
+});
+
+test("rejects obsolete legacy resources in the published artifact", async () => {
+  const result = await runVerifier(() => {}, "Content/bootstrap.css");
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Obsolete or development file must not be published/);
+});
+
+test("rejects repository documentation in the published artifact", async () => {
+  const result = await runVerifier(() => {}, "README.md");
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Development source must not be published/);
+});
+
+test("rejects credentialed external URLs", async () => {
+  const result = await runVerifier(menu => {
+    const url = new URL("https://example.com");
+    url.username = "demo";
+    url.password = "sample";
+    menu.items[0].action = { type: "url", url: url.href };
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /must not include credentials/);
 });
 
 for (const field of ["id", "title", "subtitle", "image.alt"]) {
