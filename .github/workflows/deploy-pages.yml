@@ -56,14 +56,33 @@ jobs:
             if curl --fail --silent http://127.0.0.1:8765/index.html >/dev/null; then break; fi
             sleep 1
           done
-          curl --fail --silent http://127.0.0.1:8765/CNAME | grep -Fx www.oakideas.com
-          curl --fail --silent http://127.0.0.1:8765/menu.json >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8765/CNAME | grep -Fx www.oakideas.com
+          curl --fail --silent --show-error http://127.0.0.1:8765/menu.json >/dev/null
           runtime_path=$(grep -oE 'src="_framework/blazor\.webassembly[^"]+\.js"' artifacts/site/wwwroot/index.html | sed -E 's/^src="([^"]+)"$/\1/')
           test -n "$runtime_path"
-          curl --fail --silent "http://127.0.0.1:8765/$runtime_path" >/dev/null
-          wasm_path=$(find artifacts/site/wwwroot/_framework -maxdepth 1 -name 'System.Private.CoreLib.*.wasm' -printf '%f\n' | head -n 1)
-          test -n "$wasm_path"
-          curl --fail --silent "http://127.0.0.1:8765/_framework/$wasm_path" >/dev/null
+          dotnet_assets=$(node --input-type=module -e '
+          import { readFile } from "node:fs/promises";
+          import { parseDotnetResourceMetadata } from "./scripts/dotnet-resource-metadata.mjs";
+          const wwwroot = "artifacts/site/wwwroot/";
+          const html = await readFile(`${wwwroot}index.html`, "utf8");
+          const importMapMatch = html.match(/<script\s+type="importmap">([\s\S]*?)<\/script>/i);
+          if (!importMapMatch) throw new Error("Published root is missing the .NET import map.");
+          const importMap = JSON.parse(importMapMatch[1]);
+          const loaderPath = importMap.imports?.["./_framework/dotnet.js"];
+          if (typeof loaderPath !== "string" || !loaderPath.startsWith("./_framework/")) {
+            throw new Error("Published import map does not identify the .NET loader.");
+          }
+          const metadata = parseDotnetResourceMetadata(await readFile(`${wwwroot}${loaderPath.slice(2)}`, "utf8"));
+          console.log(loaderPath.slice(2));
+          console.log(`_framework/${metadata.nativeRuntime}`);
+          console.log(`_framework/${metadata.mainAssembly}`);
+          ')
+          mapfile -t dotnet_assets <<< "$dotnet_assets"
+          test "${#dotnet_assets[@]}" -eq 3
+          for asset_path in "$runtime_path" "${dotnet_assets[@]}"; do
+            curl --fail --silent --show-error "http://127.0.0.1:8765/$asset_path" >/dev/null
+          done
+          test "$(curl --fail --silent --show-error http://127.0.0.1:8765/deployment-revision.txt)" = "$GITHUB_SHA"
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
           path: artifacts/site/wwwroot
