@@ -72,9 +72,27 @@ export async function verifyProductionSite({
     throw new Error("HTTPS root document does not reference the Blazor WebAssembly runtime.");
   }
 
-  const [menuResponse] = await Promise.all([
+  const importMapMatch = html.match(/<script\s+type=["']importmap["']>([\s\S]*?)<\/script>/i);
+  if (!importMapMatch) {
+    throw new Error("HTTPS root document is missing the .NET asset import map.");
+  }
+
+  let importMap;
+  try {
+    importMap = JSON.parse(importMapMatch[1]);
+  } catch (error) {
+    throw new Error(`The .NET asset import map is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const dotnetScript = importMap.imports?.["./_framework/dotnet.js"];
+  if (typeof dotnetScript !== "string") {
+    throw new Error("The .NET asset import map does not reference dotnet.js.");
+  }
+
+  const [menuResponse, , dotnetResponse] = await Promise.all([
     request("/menu.json", "menu configuration", fetchImpl, retryLimit, retryDelayMs, timeoutMs),
-    request(runtimeMatch[1], "Blazor WebAssembly runtime", fetchImpl, retryLimit, retryDelayMs, timeoutMs)
+    request(runtimeMatch[1], "Blazor WebAssembly runtime", fetchImpl, retryLimit, retryDelayMs, timeoutMs),
+    request(dotnetScript, ".NET asset loader", fetchImpl, retryLimit, retryDelayMs, timeoutMs)
   ]);
   let menu;
   try {
@@ -97,18 +115,10 @@ export async function verifyProductionSite({
     }
   }
 
-  const bootResponse = await request("/_framework/blazor.boot.json", "Blazor boot manifest",
-    fetchImpl, retryLimit, retryDelayMs, timeoutMs);
-  let bootManifest;
-  try {
-    bootManifest = await bootResponse.json();
-  } catch (error) {
-    throw new Error(`Blazor boot manifest is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
-  const wasmAsset = Object.keys(bootManifest?.resources?.wasm ?? {}).find(asset => asset.endsWith(".wasm"));
+  const loaderScript = await dotnetResponse.text();
+  const wasmAsset = loaderScript.match(/System\.Private\.CoreLib\.[A-Za-z0-9._-]+\.wasm/)?.[0];
   if (!wasmAsset) {
-    throw new Error("Blazor boot manifest does not list a WebAssembly runtime asset.");
+    throw new Error(".NET asset loader does not reference the WebAssembly runtime asset.");
   }
 
   assetChecks.push(request(`_framework/${wasmAsset}`, "Blazor WebAssembly asset",
@@ -116,7 +126,7 @@ export async function verifyProductionSite({
   await Promise.all(assetChecks);
 
   console.log(`Production smoke check passed for ${productionOrigin.origin}: HTTPS root, menu, ` +
-    `${menu.items.length} menu item(s), Blazor runtime and WebAssembly asset.`);
+    `${menu.items.length} menu item(s), Blazor runtime, .NET loader and WebAssembly asset.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

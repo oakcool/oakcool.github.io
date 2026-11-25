@@ -10,8 +10,9 @@ const menu = {
   ]
 };
 
-const rootDocument = '<base href="/"><script src="_framework/blazor.webassembly.js"></script>';
-const bootManifest = JSON.stringify({ resources: { wasm: { "System.Private.CoreLib.test.wasm": "sha256-test" } } });
+const rootDocument = '<base href="/"><script type="importmap">{"imports":{"./_framework/dotnet.js":"./_framework/dotnet.test.js"}}</script>' +
+  '<script src="_framework/blazor.webassembly.js"></script>';
+const dotnetLoader = 'const wasm = "System.Private.CoreLib.test.wasm";';
 
 function createFetch({ unavailablePath, unavailableAttempts = 0, redirectPath } = {}) {
   const calls = new Map();
@@ -38,7 +39,7 @@ function createFetch({ unavailablePath, unavailableAttempts = 0, redirectPath } 
     const body = new Map([
       ["/", rootDocument],
       ["/menu.json", JSON.stringify(menu)],
-      ["/_framework/blazor.boot.json", bootManifest]
+      ["/_framework/dotnet.test.js", dotnetLoader]
     ]).get(path) ?? "";
     return new Response(body, { status: 200 });
   };
@@ -52,7 +53,7 @@ test("checks HTTPS root, framework, menu, content, and every menu image", async 
   await verifyProductionSite({ fetchImpl, retryDelayMs: 0 });
 
   for (const path of [
-    "/", "/menu.json", "/_framework/blazor.webassembly.js", "/_framework/blazor.boot.json",
+    "/", "/menu.json", "/_framework/blazor.webassembly.js", "/_framework/dotnet.test.js",
     "/_framework/System.Private.CoreLib.test.wasm", "/Content/identity.png",
     "/content/identity.html", "/Content/projects.png", "/content/projects.html"
   ]) {
