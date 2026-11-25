@@ -1,0 +1,17 @@
+@using System.Globalization
+@using OakIdeas.Github.Website.Client.Menu
+
+@if (Image is not null)
+{
+    <figure class="site-image">
+        <img src="@Image.Src"
+             alt="@Image.Alt"
+             style="@($"--image-ratio:{Image.ViewportHeightRatio.ToString(CultureInfo.InvariantCulture)}")"
+             loading="eager">
+    </figure>
+}
+
+@code {
+    [Parameter]
+    public MenuImageConfiguration? Image { get; set; }
+}

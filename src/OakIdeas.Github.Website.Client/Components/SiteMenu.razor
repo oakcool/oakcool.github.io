@@ -1,0 +1,23 @@
+@using OakIdeas.Github.Website.Client.Menu
+
+<nav class="site-menu" aria-label="site sections">
+    <ul class="menu-list list-none">
+        @foreach (var item in Items.Where(item => item.Enabled).OrderBy(item => item.Order))
+        {
+            <li>
+                <MenuItem Item="item" Selected="@(item.Id == CurrentItemId)" OnSelect="OnSelect" />
+            </li>
+        }
+    </ul>
+</nav>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<MenuItemConfiguration> Items { get; set; } = [];
+
+    [Parameter]
+    public string? CurrentItemId { get; set; }
+
+    [Parameter]
+    public EventCallback<MenuItemConfiguration> OnSelect { get; set; }
+}

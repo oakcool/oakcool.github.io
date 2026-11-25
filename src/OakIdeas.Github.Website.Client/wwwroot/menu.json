@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "defaultItemId": "identity",
+  "items": [
+    {
+      "id": "projects",
+      "title": "projects",
+      "subtitle": "oakideas",
+      "order": 1,
+      "enabled": true,
+      "appearance": "standard",
+      "action": {
+        "type": "content",
+        "contentPath": "content/projects.html"
+      },
+      "image": {
+        "src": "Content/oakideasnew.png",
+        "alt": "oakideas",
+        "viewportHeightRatio": 0.4,
+        "alignment": "bottom"
+      }
+    },
+    {
+      "id": "identity",
+      "title": "mateus carvalho",
+      "subtitle": "oakcool",
+      "order": 2,
+      "enabled": true,
+      "appearance": "identity",
+      "action": {
+        "type": "content",
+        "contentPath": "content/identity.html"
+      },
+      "image": {
+        "src": "Content/mateusthoughtful.png",
+        "alt": "Mateus Carvalho thoughtfully looking into the distance",
+        "viewportHeightRatio": 0.7,
+        "alignment": "bottom"
+      }
+    }
+  ]
+}

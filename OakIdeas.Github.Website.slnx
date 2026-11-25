@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OakIdeas.Github.Website.AppHost/OakIdeas.Github.Website.AppHost.csproj" />
+    <Project Path="src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OakIdeas.Github.Website.Tests/OakIdeas.Github.Website.Tests.csproj" />
+  </Folder>
+</Solution>

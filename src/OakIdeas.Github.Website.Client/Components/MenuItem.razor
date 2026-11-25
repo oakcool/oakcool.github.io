@@ -1,0 +1,35 @@
+@using OakIdeas.Github.Website.Client.Menu
+
+@if (Item.Action.Type == "url")
+{
+    <a class="@ItemClass" href="@Item.Action.Url" target="_blank" rel="noopener noreferrer">
+        <span class="menu-item-label">
+            <span class="menu-subtitle">@Item.Subtitle</span>
+            <span class="menu-title">@Item.Title</span>
+        </span>
+    </a>
+}
+else
+{
+    <button class="@ItemClass" type="button" aria-pressed="@(Selected ? "true" : "false")" aria-current="@(Selected ? "page" : null)" @onclick="SelectAsync">
+        <span class="menu-item-label">
+            <span class="menu-subtitle">@Item.Subtitle</span>
+            <span class="menu-title">@Item.Title</span>
+        </span>
+    </button>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public MenuItemConfiguration Item { get; set; } = new();
+
+    [Parameter]
+    public bool Selected { get; set; }
+
+    [Parameter]
+    public EventCallback<MenuItemConfiguration> OnSelect { get; set; }
+
+    private string ItemClass => $"menu-item {Item.Appearance} {(Selected ? "is-current" : string.Empty)}";
+
+    private Task SelectAsync() => OnSelect.InvokeAsync(Item);
+}
