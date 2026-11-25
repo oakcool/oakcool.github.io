@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseDotnetResourceMetadata } from "./dotnet-resource-metadata.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactRoot = path.resolve(process.argv[2] ?? "");
@@ -20,17 +21,26 @@ const exists = async (relativePath) => {
 assert.equal((await read("CNAME")).trim(), "www.oakideas.com", "The production custom domain must be included.");
 assert.ok(await exists(".nojekyll"), "GitHub Pages requires .nojekyll to publish _framework assets.");
 assert.ok(await exists("css/app.css"), "The Tailwind stylesheet must be published.");
+assert.match((await read("deployment-revision.txt")).trim(), /^[a-f0-9]{40}$/,
+  "The artifact must include the 40-character source commit deployment revision.");
 
 const index = await read("index.html");
 assert.match(index, /<base href="\/">/i, "The custom-domain site must use a root base href.");
 const importMapScript = index.match(/<script\s+type="importmap">([\s\S]*?)<\/script>/i);
 assert.ok(importMapScript, "The published page must include its .NET asset import map.");
 const importMap = JSON.parse(importMapScript[1]);
+let dotnetLoaderPath;
 for (const resource of ["dotnet.js", "dotnet.native.js", "dotnet.runtime.js"]) {
   const assetPath = importMap.imports?.[`./_framework/${resource}`];
   assert.equal(typeof assetPath, "string", `The import map must resolve ${resource}.`);
   assert.ok(await exists(assetPath.replace(/^\.\//, "")), `The mapped runtime asset must exist: ${assetPath}`);
+  if (resource === "dotnet.js") {
+    dotnetLoaderPath = assetPath.replace(/^\.\//, "");
+  }
 }
+const dotnetMetadata = parseDotnetResourceMetadata(await read(dotnetLoaderPath));
+await assertSafeWasm(`_framework/${dotnetMetadata.nativeRuntime}`, "Native .NET runtime");
+await assertSafeWasm(`_framework/${dotnetMetadata.mainAssembly}`, "Main managed assembly");
 const runtimeScript = index.match(/src="_framework\/(blazor\.webassembly(?:\.[A-Za-z0-9]+)?\.js)"/i);
 assert.ok(runtimeScript, "The published page must reference the Blazor WebAssembly runtime.");
 assert.ok(await exists(`_framework/${runtimeScript[1]}`), "The referenced Blazor runtime must exist.");
@@ -102,6 +112,14 @@ async function assertSafeFile(relativePath, extension) {
   const resolvedPath = path.resolve(artifactRoot, ...segments);
   assert.ok(resolvedPath.startsWith(`${artifactRoot}${path.sep}`), `Path escapes the published artifact: ${relativePath}`);
   assert.ok(await exists(relativePath), `Referenced static asset does not exist: ${relativePath}`);
+}
+
+async function assertSafeWasm(relativePath, label) {
+  await assertSafeFile(relativePath, ".wasm");
+  const bytes = await readFile(path.join(artifactRoot, relativePath));
+  assert.ok(bytes.length >= 8 &&
+    Buffer.from(bytes.subarray(0, 8)).equals(Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00])),
+  `${label} must have the WebAssembly binary signature.`);
 }
 
 async function ensureNoSourceFiles(directory) {

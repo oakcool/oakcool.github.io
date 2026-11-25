@@ -35,6 +35,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj --configuration Release --no-restore --output artifacts/site
+      - name: Add deterministic deployment revision marker
+        run: printf '%s\n' "$GITHUB_SHA" > artifacts/site/wwwroot/deployment-revision.txt
       - run: npm run check:artifact -- artifacts/site/wwwroot
       - name: Test the published static site in Playwright
         run: npm run test:e2e
