@@ -20,9 +20,10 @@ Use for Pages workflow changes, custom-domain/static artifact questions, cutover
 npm run build:css
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj -c Release --no-restore -o artifacts/site
 npm run check:artifact -- artifacts/site/wwwroot
+npm run test:deployment
 ```
 
-Read `docs/deployment.md` for the HTTP smoke sequence, owner pre-merge checks, domain/HTTPS verification, and rollback.
+The deployment workflow runs `node scripts/smoke-production.mjs` after a successful `master` deployment. It retries HTTPS checks a bounded number of times and verifies the root, framework, menu, referenced content, and images. Read `docs/deployment.md` for owner verification and the rollback path.
 
 ## Safe boundaries
 

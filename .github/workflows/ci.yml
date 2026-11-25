@@ -28,6 +28,7 @@ jobs:
           aspire --version
       - run: npm ci
       - run: npm run test:artifact
+      - run: npm run test:deployment
       - run: npm run build:css
       - run: dotnet restore OakIdeas.Github.Website.slnx --locked-mode
       - run: dotnet test OakIdeas.Github.Website.slnx --configuration Release --no-restore

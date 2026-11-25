@@ -32,6 +32,7 @@ jobs:
           aspire --version
       - run: npm ci
       - run: npm run test:artifact
+      - run: npm run test:deployment
       - run: npm run build:css
       - run: dotnet restore OakIdeas.Github.Website.slnx --locked-mode
       - run: dotnet test OakIdeas.Github.Website.slnx --configuration Release --no-restore
@@ -78,3 +79,18 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+
+  verify-production:
+    if: github.ref == 'refs/heads/master'
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - name: Smoke-test the deployed custom domain
+        run: node scripts/smoke-production.mjs

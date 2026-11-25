@@ -2,7 +2,7 @@
 
 ## Automated path
 
-`.github/workflows/deploy-pages.yml` runs for every push to `master`, including the first merge, and supports owner-initiated `workflow_dispatch` recovery from `master`. Pull requests never publish or deploy. The workflow restores in locked mode, runs xUnit/BUnit, Node artifact-validation regressions, and Playwright against both the development server and the Release artifact served over static HTTP. It builds Tailwind, publishes the standalone client, validates and smoke-tests the exact `artifacts/site/wwwroot` directory, then uploads only that directory. Deployment runs with Pages write and OIDC permissions in the `github-pages` environment and is serialized with non-cancelling concurrency.
+`.github/workflows/deploy-pages.yml` runs for every push to `master` and supports owner-initiated `workflow_dispatch`; both jobs are restricted to `master`. Pull requests never publish or deploy. The workflow restores in locked mode, runs xUnit/BUnit, Node artifact and deployment-smoke regressions, and Playwright against both the development server and the Release artifact served over static HTTP. It builds Tailwind, publishes the standalone client, validates and smoke-tests the exact `artifacts/site/wwwroot` directory, then uploads only that directory. Deployment runs with Pages write and OIDC permissions in the `github-pages` environment and is serialized with non-cancelling concurrency. A read-only post-deployment job then checks the live custom-domain HTTPS root, Blazor runtime and WASM, menu, content fragments, and every menu image. Requests have bounded retries and failures identify the resource and last error.
 
 `wwwroot/CNAME` retains `www.oakideas.com`, `.nojekyll` preserves the Blazor `_framework` directory, and the custom-domain root uses `<base href="/">`. No DNS changes are required or authorized by this change.
 
@@ -19,15 +19,14 @@ The agent cannot inspect/change owner Pages administration settings, remove envi
 
 ## Post-merge smoke check
 
-Immediately after merge, the owner verifies the `Deploy GitHub Pages` run succeeded and the environment deployment URL is recorded. Then check:
+After merge, confirm the `Deploy GitHub Pages` run and its `verify-production` job succeed; the latter records automated HTTP status and asset availability. The owner should also confirm the environment deployment URL and check:
 
-1. `https://www.oakideas.com` returns the page over HTTPS without certificate warnings.
-2. The browser network panel loads `menu.json`, both original image URLs, and `_framework` files successfully; the console has no Blazor startup/config errors.
-3. Identity is selected and its content is initially hidden. Selecting projects and identity updates the copy and image.
-4. The GitHub repositories link points to `https://github.com/oakcool?tab=repositories`.
-5. At a 375px viewport, both sections remain usable and there is no horizontal page overflow.
-6. The published root still contains `CNAME` and `.nojekyll`.
+1. The browser shows `https://www.oakideas.com` without certificate warnings and no Blazor startup/config errors.
+2. Identity is selected and its content is initially hidden. Selecting projects and identity updates the copy and image.
+3. The GitHub repositories link points to `https://github.com/oakcool?tab=repositories`.
+4. At a 375px viewport, both sections remain usable and there is no horizontal page overflow.
+5. The published root still contains `CNAME` and `.nojekyll`; the artifact verifier and pre-deployment static HTTP smoke check cover these files.
 
 ## Rollback
 
-Before cutover, retain the previous known-good Pages deployment/commit and an artifact if available. If the new deployment fails, the owner stops further production dispatches, restores the recorded known-good site/deployment using GitHub Pages deployment history or a reviewed rollback commit, and verifies the custom domain and HTTPS again. A corrected commit merged to `master` triggers the normal validated deployment; `workflow_dispatch` is reserved for owner recovery from `master`, never PR branches. Do not change DNS as a rollback shortcut.
+Record the last known-good successful Pages run and its source commit; retain the corresponding source or artifact under the owner's normal repository retention policy. If production must be rolled back, the owner prepares and reviews a rollback commit that restores the known-good site files, then merges it to `master`. The normal build, artifact checks, deployment, and post-deployment smoke job run again. `workflow_dispatch` deploys the workflow from the selected `master` ref; it does not select or restore an older artifact, so dispatching alone is not a rollback. Use it only for owner recovery when the current `master` artifact should be deployed again. Verify HTTPS and site behavior after recovery. Do not change DNS as a rollback shortcut.

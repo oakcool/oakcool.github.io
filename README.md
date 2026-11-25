@@ -11,6 +11,7 @@ dotnet tool install --global Aspire.Cli --version 13.6.5
 npm ci
 npm run build:css
 npm run test:artifact
+npm run test:deployment
 dotnet restore OakIdeas.Github.Website.slnx --locked-mode
 dotnet test OakIdeas.Github.Website.slnx --no-restore
 npm run test:e2e
@@ -35,6 +36,8 @@ E2E_TARGET=production npm run test:e2e
 ```
 
 The production browser check serves and tests the published `artifacts/site/wwwroot` artifact over static HTTP; regular `npm run test:e2e` continues to use the local Blazor development server. The deployable site is `artifacts/site/wwwroot` only. Do not publish the outer directory, AppHost, tests, repository instructions, or source files.
+
+The Pages workflow also checks `https://www.oakideas.com` after each successful deployment, including the root document, Blazor runtime/WASM, menu, content, and menu images. See [deployment and rollback](docs/deployment.md) for owner verification and recovery steps.
 
 ## Project map
 

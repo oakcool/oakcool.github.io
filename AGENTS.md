@@ -15,6 +15,7 @@
 - Keep static paths same-origin and traversal-safe; external links must be HTTPS.
 - Agents must not change Pages/repository administration, initiate a production deployment, or manually dispatch `deploy-pages.yml`. An authorized merge to `master` is the production deployment trigger; the owner alone may use the recovery dispatch.
 - CI must never deploy from pull requests. Publish only the standalone client `wwwroot`.
+- Keep Pages rollback guidance tied to the actual workflow: a rollback commit merged to `master` rebuilds and redeploys; `workflow_dispatch` only rebuilds the selected `master` ref. Verify live HTTPS and required static assets after deployment.
 
 ## Engineering and validation
 
