@@ -89,7 +89,8 @@ public static partial class MenuConfigurationValidator
                 if (item.Action.ContentPath is not null ||
                     !Uri.TryCreate(item.Action.Url, UriKind.Absolute, out var uri) ||
                     uri.Scheme != Uri.UriSchemeHttps ||
-                    string.IsNullOrEmpty(uri.Host))
+                    string.IsNullOrEmpty(uri.Host) ||
+                    !string.IsNullOrEmpty(uri.UserInfo))
                 {
                     throw new InvalidDataException($"Menu item '{item.Id}' has an invalid external URL.");
                 }

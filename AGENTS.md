@@ -20,6 +20,7 @@
 
 - Use .NET 10, centrally pinned NuGet versions and lock files, Node dependencies pinned by `package-lock.json`, and the repository's existing Tailwind/Blazor/xUnit/BUnit/Playwright stack.
 - Keep the client standalone WebAssembly and use responsive CSS layout, not JavaScript viewport measurements.
+- Every change removes superseded code and resources within its scope. Reviewers require repository evidence for removals and retained compatibility files, and changes must not introduce unnecessary duplicates.
 - Add focused tests for behavior/configuration changes. Run and fix local tests/builds before reporting results when the environment supports them.
 - Use the exact commands in `README.md` and `docs`; if a command cannot run, report its actual error/limitation. Never claim an unexecuted CI check passed.
 - CI execution is the owner/reviewer responsibility, not grounds to invent checks, block otherwise complete engineering, or create a separate prerequisite issue.

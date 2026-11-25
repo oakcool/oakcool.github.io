@@ -11,8 +11,8 @@ Use for layout/CSS changes, screenshot requests, design reviews, viewport sizing
 
 ## Inputs and outputs
 
-- Inputs: the relevant legacy source rules, target viewport(s), and the section being checked.
-- Outputs: Playwright pass/failure evidence, desktop/mobile screenshots in `test-results`, and any documented mismatch or environment limitation.
+- Inputs: the pre-migration source revision, target viewports 1920×1080, 1440×900, 1024×768, and 390×844, and the identity/projects states.
+- Outputs: Playwright pass/failure evidence, deterministic full-page screenshots for both states at every viewport in `test-results`, and any documented mismatch or environment limitation.
 
 ## Commands
 
@@ -23,8 +23,8 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The browser suite emits full-page desktop-projects, desktop-identity, and 375px mobile-projects screenshots under Playwright's `test-results` output directory.
+The browser suite emits full-page identity and projects screenshots for all four reference viewports under Playwright's `test-results` output directory. Chromium runs at device scale factor 1 with the local system font stack and screenshot animations disabled; geometry checks allow 2 CSS pixels of rounding variance.
 
 ## Safe boundaries
 
-Compare against `docs/design-baseline.md`; do not “improve” the brand by introducing a navbar, dark mode, changed copy, or JavaScript viewport measurements. Do not commit generated screenshots unless explicitly requested.
+Compare against `docs/design-baseline.md`; do not “improve” the brand by introducing a navbar, dark mode, changed copy, or JavaScript viewport measurements. Every change must remove superseded code/resources in its scope, cite evidence for removals and compatibility exceptions, and avoid unnecessary duplication. Do not commit generated screenshots unless explicitly requested.

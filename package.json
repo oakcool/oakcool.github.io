@@ -12,6 +12,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
     "@playwright/test": "1.65.1",
     "@tailwindcss/cli": "4.3.5",
     "tailwindcss": "4.3.5"
