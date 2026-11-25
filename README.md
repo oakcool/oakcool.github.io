@@ -37,7 +37,7 @@ E2E_TARGET=production npm run test:e2e
 
 The production browser check serves and tests the published `artifacts/site/wwwroot` artifact over static HTTP; regular `npm run test:e2e` continues to use the local Blazor development server. The deployable site is `artifacts/site/wwwroot` only. Do not publish the outer directory, AppHost, tests, repository instructions, or source files.
 
-The Pages workflow also checks `https://www.oakideas.com` after each successful deployment, including the root document, Blazor runtime/WASM, menu, content, and menu images. See [deployment and rollback](docs/deployment.md) for owner verification and recovery steps.
+The Pages workflow writes the deploying source commit to `deployment-revision.txt` in the published `wwwroot` and verifies that the live marker matches the expected commit. Post-deployment checks validate response content types and bodies—not only HTTP status—for the root, Blazor bootstrap and .NET loader, native runtime and main managed WebAssembly assembly, menu, content, and PNG images. Checks retry HTTP/body/validation failures up to four times with request timeouts; unsafe paths and off-domain redirects fail immediately with resource-specific diagnostics. See [deployment and rollback](docs/deployment.md) for owner verification and recovery steps.
 
 ## Project map
 
