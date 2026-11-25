@@ -8,6 +8,7 @@
     "watch:css": "npx @tailwindcss/cli -i styles/site.css -o src/OakIdeas.Github.Website.Client/wwwroot/css/app.css --watch",
     "test:e2e": "playwright test",
     "test:artifact": "node --test tests/static-artifact.test.mjs",
+    "test:deployment": "node --test tests/production-smoke.test.mjs",
     "check:artifact": "node scripts/verify-static-artifact.mjs"
   },
   "type": "module",

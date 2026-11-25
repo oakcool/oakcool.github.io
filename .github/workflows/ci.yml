@@ -28,12 +28,15 @@ jobs:
           aspire --version
       - run: npm ci
       - run: npm run test:artifact
+      - run: npm run test:deployment
       - run: npm run build:css
       - run: dotnet restore OakIdeas.Github.Website.slnx --locked-mode
       - run: dotnet test OakIdeas.Github.Website.slnx --configuration Release --no-restore
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj --configuration Release --no-restore --output artifacts/site
+      - name: Add deterministic deployment revision marker
+        run: printf '%s\n' "$GITHUB_SHA" > artifacts/site/wwwroot/deployment-revision.txt
       - run: npm run check:artifact -- artifacts/site/wwwroot
       - name: Test the published static site in Playwright
         run: npm run test:e2e
@@ -49,11 +52,30 @@ jobs:
             if curl --fail --silent http://127.0.0.1:8765/index.html >/dev/null; then break; fi
             sleep 1
           done
-          curl --fail --silent http://127.0.0.1:8765/CNAME | grep -Fx www.oakideas.com
-          curl --fail --silent http://127.0.0.1:8765/menu.json >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8765/CNAME | grep -Fx www.oakideas.com
+          curl --fail --silent --show-error http://127.0.0.1:8765/menu.json >/dev/null
           runtime_path=$(grep -oE 'src="_framework/blazor\.webassembly[^"]+\.js"' artifacts/site/wwwroot/index.html | sed -E 's/^src="([^"]+)"$/\1/')
           test -n "$runtime_path"
-          curl --fail --silent "http://127.0.0.1:8765/$runtime_path" >/dev/null
-          wasm_path=$(find artifacts/site/wwwroot/_framework -maxdepth 1 -name 'System.Private.CoreLib.*.wasm' -printf '%f\n' | head -n 1)
-          test -n "$wasm_path"
-          curl --fail --silent "http://127.0.0.1:8765/_framework/$wasm_path" >/dev/null
+          dotnet_assets=$(node --input-type=module -e '
+          import { readFile } from "node:fs/promises";
+          import { parseDotnetResourceMetadata } from "./scripts/dotnet-resource-metadata.mjs";
+          const wwwroot = "artifacts/site/wwwroot/";
+          const html = await readFile(`${wwwroot}index.html`, "utf8");
+          const importMapMatch = html.match(/<script\s+type="importmap">([\s\S]*?)<\/script>/i);
+          if (!importMapMatch) throw new Error("Published root is missing the .NET import map.");
+          const importMap = JSON.parse(importMapMatch[1]);
+          const loaderPath = importMap.imports?.["./_framework/dotnet.js"];
+          if (typeof loaderPath !== "string" || !loaderPath.startsWith("./_framework/")) {
+            throw new Error("Published import map does not identify the .NET loader.");
+          }
+          const metadata = parseDotnetResourceMetadata(await readFile(`${wwwroot}${loaderPath.slice(2)}`, "utf8"));
+          console.log(loaderPath.slice(2));
+          console.log(`_framework/${metadata.nativeRuntime}`);
+          console.log(`_framework/${metadata.mainAssembly}`);
+          ')
+          mapfile -t dotnet_assets <<< "$dotnet_assets"
+          test "${#dotnet_assets[@]}" -eq 3
+          for asset_path in "$runtime_path" "${dotnet_assets[@]}"; do
+            curl --fail --silent --show-error "http://127.0.0.1:8765/$asset_path" >/dev/null
+          done
+          test "$(curl --fail --silent --show-error http://127.0.0.1:8765/deployment-revision.txt)" = "$GITHUB_SHA"

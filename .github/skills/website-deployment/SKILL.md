@@ -19,10 +19,12 @@ Use for Pages workflow changes, custom-domain/static artifact questions, cutover
 ```sh
 npm run build:css
 dotnet publish src/OakIdeas.Github.Website.Client/OakIdeas.Github.Website.Client.csproj -c Release --no-restore -o artifacts/site
+printf '%s\n' "$(git rev-parse HEAD)" > artifacts/site/wwwroot/deployment-revision.txt
 npm run check:artifact -- artifacts/site/wwwroot
+npm run test:deployment
 ```
 
-Read `docs/deployment.md` for the HTTP smoke sequence, owner pre-merge checks, domain/HTTPS verification, and rollback.
+The deployment workflow writes the source SHA to `deployment-revision.txt` in the uploaded `wwwroot`, then runs `node scripts/smoke-production.mjs` with `EXPECTED_DEPLOYMENT_REVISION` set to that SHA. The check compares the live marker and validates content types and bodies for JavaScript, the native WebAssembly runtime, the main managed assembly, PNG images, HTML fragments, JSON, and the root document. It reads native runtime and assembly names from the published .NET resource manifest rather than relying on fingerprinted names. HTTP, body-read, and validation failures retry up to four times with request timeouts; errors identify the path, attempt count, and cause, while unsafe paths and cross-origin redirects fail without retry. Read `docs/deployment.md` for owner verification and the rollback path.
 
 ## Safe boundaries
 
