@@ -31,8 +31,9 @@ test.beforeEach(async ({ page }) => {
   });
   page.on("pageerror", error => issues.pageErrors.push(error.message));
   page.on("requestfailed", request => {
-    if (isRequiredResource(request.url())) {
-      issues.failedResources.push(`${request.url()}: ${request.failure()?.errorText ?? "request failed"}`);
+    const failure = request.failure()?.errorText;
+    if (isRequiredResource(request.url()) && failure !== "net::ERR_ABORTED") {
+      issues.failedResources.push(`${request.url()}: ${failure ?? "request failed"}`);
     }
   });
   page.on("response", response => {

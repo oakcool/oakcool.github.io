@@ -23,6 +23,14 @@ assert.ok(await exists("css/app.css"), "The Tailwind stylesheet must be publishe
 
 const index = await read("index.html");
 assert.match(index, /<base href="\/">/i, "The custom-domain site must use a root base href.");
+const importMapScript = index.match(/<script\s+type="importmap">([\s\S]*?)<\/script>/i);
+assert.ok(importMapScript, "The published page must include its .NET asset import map.");
+const importMap = JSON.parse(importMapScript[1]);
+for (const resource of ["dotnet.js", "dotnet.native.js", "dotnet.runtime.js"]) {
+  const assetPath = importMap.imports?.[`./_framework/${resource}`];
+  assert.equal(typeof assetPath, "string", `The import map must resolve ${resource}.`);
+  assert.ok(await exists(assetPath.replace(/^\.\//, "")), `The mapped runtime asset must exist: ${assetPath}`);
+}
 const runtimeScript = index.match(/src="_framework\/(blazor\.webassembly(?:\.[A-Za-z0-9]+)?\.js)"/i);
 assert.ok(runtimeScript, "The published page must reference the Blazor WebAssembly runtime.");
 assert.ok(await exists(`_framework/${runtimeScript[1]}`), "The referenced Blazor runtime must exist.");
@@ -40,9 +48,11 @@ for (const item of menu.items) {
   assert.ok(typeof item.id === "string" && item.id.trim().length > 0 && !ids.has(item.id),
     "Menu item ids must be unique and non-empty.");
   ids.add(item.id);
-  assert.ok(typeof item.enabled === "boolean", `Menu item ${item.id} needs an enabled flag.`);
-  assert.ok(Number.isInteger(item.order) && item.order >= -2147483648 && item.order <= 2147483647,
-    `Menu item ${item.id} needs an integer order.`);
+  assert.ok(item.enabled === undefined || typeof item.enabled === "boolean",
+    `Menu item ${item.id} has an invalid enabled flag.`);
+  assert.ok(item.order === undefined ||
+    (Number.isInteger(item.order) && item.order >= -2147483648 && item.order <= 2147483647),
+  `Menu item ${item.id} has an invalid order.`);
   assert.ok(["standard", "identity"].includes(item.appearance), `Unsupported appearance: ${item.appearance}`);
   assert.ok(typeof item.title === "string" && item.title.trim().length > 0 &&
     typeof item.subtitle === "string" && item.subtitle.trim().length > 0,

@@ -20,10 +20,16 @@ async function runVerifier(editMenu = () => {}) {
     await writeFile(path.join(artifactRoot, ".nojekyll"), "");
     await mkdir(path.join(artifactRoot, "css"), { recursive: true });
     await writeFile(path.join(artifactRoot, "css/app.css"), "");
+    const runtimeAssets = ["dotnet.js", "dotnet.native.js", "dotnet.runtime.js"];
+    const imports = Object.fromEntries(runtimeAssets.map(name => [`./_framework/${name}`, `./_framework/${name}`]));
     await writeFile(path.join(artifactRoot, "index.html"),
-      '<base href="/"><script src="_framework/blazor.webassembly.js"></script>');
+      `<base href="/"><script type="importmap">${JSON.stringify({ imports })}</script>` +
+      '<script src="_framework/blazor.webassembly.js"></script>');
     await mkdir(path.join(artifactRoot, "_framework"), { recursive: true });
     await writeFile(path.join(artifactRoot, "_framework/blazor.webassembly.js"), "");
+    for (const asset of runtimeAssets) {
+      await writeFile(path.join(artifactRoot, "_framework", asset), "");
+    }
     await writeFile(path.join(artifactRoot, "menu.json"), JSON.stringify(menu));
 
     for (const item of menu.items) {
@@ -48,6 +54,8 @@ test("accepts the checked-in menu and case-insensitive file extensions", async (
   const result = await runVerifier(menu => {
     menu.items[1].action.contentPath = "content/identity.HTML";
     menu.items[1].image.src = "Content/mateusthoughtful.PNG";
+    delete menu.items[0].enabled;
+    delete menu.items[0].order;
   });
 
   assert.equal(result.status, 0, result.stderr);

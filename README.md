@@ -10,6 +10,7 @@ Requirements: .NET SDK `10.0.404` (pinned by `global.json`), Node.js 20 or later
 dotnet tool install --global Aspire.Cli --version 13.6.5
 npm ci
 npm run build:css
+npm run test:artifact
 dotnet restore OakIdeas.Github.Website.slnx --locked-mode
 dotnet test OakIdeas.Github.Website.slnx --no-restore
 npm run test:e2e

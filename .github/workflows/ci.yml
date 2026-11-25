@@ -51,7 +51,7 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:8765/CNAME | grep -Fx www.oakideas.com
           curl --fail --silent http://127.0.0.1:8765/menu.json >/dev/null
-          runtime_path=$(grep -oE '_framework/blazor\.webassembly[^"]+\.js' artifacts/site/wwwroot/index.html)
+          runtime_path=$(grep -oE 'src="_framework/blazor\.webassembly[^"]+\.js"' artifacts/site/wwwroot/index.html | sed -E 's/^src="([^"]+)"$/\1/')
           test -n "$runtime_path"
           curl --fail --silent "http://127.0.0.1:8765/$runtime_path" >/dev/null
           wasm_path=$(find artifacts/site/wwwroot/_framework -maxdepth 1 -name 'System.Private.CoreLib.*.wasm' -printf '%f\n' | head -n 1)

@@ -15,7 +15,7 @@ public sealed class MenuConfigurationValidatorTests
     public void Validate_RejectsDuplicateIds()
     {
         var configuration = CreateConfiguration();
-        configuration.Items.Add(CreateItem("identity"));
+        configuration.Items.Add(configuration.Items[1]);
 
         Assert.Throws<InvalidDataException>(() => MenuConfigurationValidator.Validate(configuration));
     }
@@ -85,6 +85,8 @@ public sealed class MenuConfigurationValidatorTests
         var configuration = CreateConfiguration();
         configuration.Items[1].Action.ContentPath = "content/identity.HTML";
         configuration.Items[1].Image.Src = "Content/site.PNG";
+        configuration.Items[0].Enabled = false;
+        configuration.Items[0].Order = 0;
 
         MenuConfigurationValidator.Validate(configuration);
     }
