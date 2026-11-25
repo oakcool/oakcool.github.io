@@ -61,7 +61,7 @@ jobs:
           wasm_path=$(find artifacts/site/wwwroot/_framework -maxdepth 1 -name 'System.Private.CoreLib.*.wasm' -printf '%f\n' | head -n 1)
           test -n "$wasm_path"
           curl --fail --silent "http://127.0.0.1:8765/_framework/$wasm_path" >/dev/null
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: artifacts/site/wwwroot
 
